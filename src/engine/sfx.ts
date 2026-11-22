@@ -1,6 +1,9 @@
 // Hybrid SFX Engine: automatically loads external MP3s from public/audio/sfx/ (per AUDIO_SPEC.md)
 // and falls back seamlessly to lightweight zero-dependency Web Audio synth when files are not yet present.
 
+// Toggle external MP3 loading; set false to use the built-in Web Audio procedural synth.
+const USE_EXTERNAL_SFX = false;
+
 let audioCtx: AudioContext | null = null;
 let sfxEnabled = true;
 let sfxVolume = 0.35;
@@ -93,6 +96,11 @@ function playCue(cue: SfxCueId, synthFallback: () => void) {
     const last = lastPlayedAt.get(cue);
     if (last !== undefined && now - last < cd) return;
     lastPlayedAt.set(cue, now);
+  }
+
+  if (!USE_EXTERNAL_SFX) {
+    synthFallback();
+    return;
   }
 
   const status = externalStatus[cue];

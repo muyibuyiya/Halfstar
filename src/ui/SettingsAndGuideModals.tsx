@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Settings, HelpCircle, X, Volume2, VolumeX, Music } from 'lucide-react';
 import { useGameStore } from '../store/useGameStore';
 import { sfx } from '../engine/sfx';
-import { bgm, BgmMood } from '../engine/bgm';
+import { bgm, BgmMood, USE_EXTERNAL_BGM } from '../engine/bgm';
 
 const BGM_AUDIT_LIST: Array<{ mood: BgmMood; label: string; file: string }> = [
   { mood: 'title', label: '主界面', file: './audio/bgm/bgm_title.mp3' },
@@ -25,6 +25,10 @@ export const SettingsModal: React.FC = () => {
     setAuditing(true);
     const next: Record<string, 'mp3' | 'synth'> = {};
     for (const item of BGM_AUDIT_LIST) {
+      if (!USE_EXTERNAL_BGM) {
+        next[item.mood] = 'synth';
+        continue;
+      }
       try {
         const res = await fetch(item.file, { method: 'HEAD' });
         const ct = res.headers.get('content-type') ?? '';

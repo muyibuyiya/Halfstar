@@ -3,6 +3,9 @@
 // External tracks are crossfaded over 1.5s (AUDIO_SPEC.md section 5). The
 // procedural synth remains as a fallback so the game always has music.
 
+// Toggle external MP3 loading; set false to use the built-in Web Audio procedural synth.
+export const USE_EXTERNAL_BGM = false;
+
 export type BgmMood = 'title' | 'explore' | 'empire' | 'combat' | 'crisis' | 'victory';
 
 const BGM_FILE_MAP: Record<BgmMood, string> = {
@@ -87,6 +90,16 @@ class SpaceBgmManager {
     const moodChanged = mood !== this.currentMood;
     this.currentMood = mood;
     if (!this.started || !this.enabled) return;
+
+    if (!USE_EXTERNAL_BGM) {
+      if (!moodChanged && this.padTimer !== null) return;
+      this.usingExternal = false;
+      this.chordIndex = 0;
+      this.stopSynthLoop();
+      this.startSynthLoop();
+      return;
+    }
+
     if (!moodChanged && (this.usingExternal || this.padTimer !== null)) return;
 
     this.loadAndPlay(this.sourceFor(mood));
