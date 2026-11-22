@@ -162,6 +162,18 @@ export function issueBuildOutpostOrder(
   if (sys.ownerId !== null) return { ok: false, message: '该星系已有归属' };
   if (!sys.surveyedByPlayer) return { ok: false, message: '请先派遣科研船完成该星系的调查' };
 
+  // A construction ship may already be en route to (or working on) this system.
+  // Reject before charging anything: the previous code re-ran issueMoveOrder,
+  // which wiped the queued build order while the player still paid full price.
+  const alreadyQueued = Object.values(state.fleets).some(
+    (f) =>
+      f.ownerId === empire.id &&
+      f.orders.some((o) => o.type === 'build_outpost' && o.targetSystemId === targetSystemId)
+  );
+  if (alreadyQueued) {
+    return { ok: false, message: '已有工程船在建造该星系的前哨站，请勿重复下达' };
+  }
+
   const cost = getOutpostCost(state, empire.id, targetSystemId);
   if (empire.resources.alloys < cost.alloys) {
     return { ok: false, message: `合金不足（需要 ${cost.alloys} 合金）` };
@@ -181,6 +193,8 @@ export function issueBuildOutpostOrder(
     type: 'build_outpost',
     targetSystemId,
     progress: 0,
+    paidAlloys: cost.alloys,
+    paidInfluence: cost.influence,
   });
   return { ok: true };
 }
@@ -370,6 +384,16 @@ export function chooseResearch(
 
   slot.activeTechId = techId;
   recalculateEmpireEconomy(state, empire.id);
+
+  // Once all three research lines are assigned the onboarding prompt is obsolete.
+  if (
+    empire.research.physics.activeTechId &&
+    empire.research.society.activeTechId &&
+    empire.research.engineering.activeTechId
+  ) {
+    state.alerts = state.alerts.filter((a) => a.id !== 'alert_tech_start');
+  }
+
   const tech = TECHNOLOGIES[techId];
   return { ok: true, message: `开始研发：${tech?.name ?? techId}` };
 }

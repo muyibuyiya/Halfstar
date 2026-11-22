@@ -282,6 +282,9 @@ export type FleetOrder =
       type: 'build_outpost';
       targetSystemId: string;
       progress: number;
+      /** Cost actually charged when the order was issued (used for refunds). */
+      paidAlloys?: number;
+      paidInfluence?: number;
     }
   | {
       type: 'build_stations';

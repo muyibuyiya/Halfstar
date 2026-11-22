@@ -542,10 +542,32 @@ function stepFleet(state: GameStateData, fleet: Fleet): void {
 
   if (order.type === 'build_outpost') {
     const sys = state.systems[order.targetSystemId];
-    if (!sys || fleet.systemId !== sys.id || sys.ownerId !== null) {
+    if (!sys) {
       fleet.orders.shift();
       return;
     }
+    if (sys.ownerId !== null) {
+      // Another empire claimed the system while we were en route. Drop the order
+      // and refund the upfront cost instead of silently swallowing it.
+      fleet.orders.shift();
+      if (empire) {
+        empire.resources.alloys += order.paidAlloys ?? OUTPOST_ALLOY_COST;
+        empire.resources.influence += order.paidInfluence ?? 0;
+        recalculateEmpireEconomy(state, empire.id);
+      }
+      fleet.statusText = '前哨站订单取消（星系已有归属），资源已退还';
+      if (fleet.ownerId === state.playerEmpireId) {
+        pushAlert(state, {
+          kind: 'warning',
+          title: `前哨站建造取消：${sys.name}`,
+          detail: '该星系在此期间已被其他势力占据，已退还此前预付的合金与影响力。',
+          systemId: sys.id,
+          fleetId: fleet.id,
+        });
+      }
+      return;
+    }
+    if (fleet.systemId !== sys.id) return; // still travelling, keep the order
     moveFleetLocallyTowards(fleet, 6, 4, 2.5);
     order.progress += 5.5; // ~18 days
     fleet.statusText = `建造前哨站 (${Math.min(100, Math.round(order.progress))}%)`;
@@ -646,6 +668,19 @@ function stepFleet(state: GameStateData, fleet: Fleet): void {
 export function advanceOneDay(state: GameStateData): void {
   state.date.totalDays += 1;
   state.date.day += 1;
+
+  // Drop the onboarding research prompt once all three lines are assigned.
+  // (Also heals saves created before the alert was dismissible.)
+  const playerEmpire = state.empires[state.playerEmpireId];
+  if (
+    playerEmpire &&
+    state.alerts.some((a) => a.id === 'alert_tech_start') &&
+    playerEmpire.research.physics.activeTechId &&
+    playerEmpire.research.society.activeTechId &&
+    playerEmpire.research.engineering.activeTechId
+  ) {
+    state.alerts = state.alerts.filter((a) => a.id !== 'alert_tech_start');
+  }
 
   let isNewMonth = false;
   if (state.date.day > 30) {

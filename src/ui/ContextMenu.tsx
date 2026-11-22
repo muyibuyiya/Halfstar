@@ -2,6 +2,7 @@ import React from 'react';
 import { Compass, Flag, Navigation, Orbit, Pickaxe, FlaskConical } from 'lucide-react';
 import { useGameStore } from '../store/useGameStore';
 import { getOutpostCost } from '../engine/commands';
+import { hasOutpostOrderFor } from '../engine/fleetStatus';
 
 export const ContextMenu: React.FC = () => {
   const game = useGameStore((s) => s.game);
@@ -33,6 +34,7 @@ export const ContextMenu: React.FC = () => {
         );
 
   const outpostCost = getOutpostCost(game, game.playerEmpireId, sys.id);
+  const outpostQueued = hasOutpostOrderFor(game.fleets, game.playerEmpireId, sys.id);
   const unbuiltMining = sys.planets.filter(
     (p) => p.deposit && p.deposit.type !== 'research' && p.stationType === 'none'
   ).length;
@@ -89,14 +91,19 @@ export const ContextMenu: React.FC = () => {
           {sys.surveyedByPlayer && sys.ownerId === null && constructorShip && (
             <button
               onClick={() => commandBuildOutpost(constructorShip.id, sys.id)}
-              className="w-full px-3 py-1.5 text-left flex items-center justify-between hover:bg-amber-500/20 text-amber-200 cursor-pointer"
+              disabled={outpostQueued}
+              className={`w-full px-3 py-1.5 text-left flex items-center justify-between ${
+                outpostQueued
+                  ? 'text-slate-500 cursor-not-allowed'
+                  : 'hover:bg-amber-500/20 text-amber-200 cursor-pointer'
+              }`}
             >
               <span className="flex items-center gap-2">
                 <Flag className="w-3.5 h-3.5 text-amber-400" />
-                建造前哨站
+                {outpostQueued ? '前哨站建造中…' : '建造前哨站'}
               </span>
               <span className="text-[10px] text-amber-300/80 font-mono">
-                {outpostCost.alloys}/{outpostCost.influence}
+                {outpostQueued ? '已派遣' : `${outpostCost.alloys}/${outpostCost.influence}`}
               </span>
             </button>
           )}

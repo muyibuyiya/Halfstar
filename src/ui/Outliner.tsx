@@ -11,6 +11,7 @@ import {
   PanelRightOpen,
 } from 'lucide-react';
 import { useGameStore } from '../store/useGameStore';
+import { fleetStatusLabel } from '../engine/fleetStatus';
 
 export const Outliner: React.FC = () => {
   const game = useGameStore((s) => s.game);
@@ -225,7 +226,7 @@ export const Outliner: React.FC = () => {
                       )}
                     </div>
                     <div className="text-[10px] text-slate-400 truncate mt-0.5">
-                      {fleet.statusText}
+                      {fleetStatusLabel(fleet, game.systems)}
                     </div>
                   </div>
                 );

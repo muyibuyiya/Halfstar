@@ -29,6 +29,7 @@ import {
   STARBASE_TIERS,
 } from '../engine/starbaseSystem';
 import { HULL_CLASSES, HULL_ORDER } from '../data/ships';
+import { fleetStatusLabel, hasOutpostOrderFor } from '../engine/fleetStatus';
 import { TECHNOLOGIES } from '../data/technologies';
 import {
   MEGASTRUCTURE_LIST,
@@ -93,6 +94,9 @@ export const SelectionPanel: React.FC = () => {
       curSys?.planets.filter(
         (p) => p.deposit && p.deposit.type === 'research' && p.stationType === 'none'
       ).length ?? 0;
+    const outpostQueued = curSys
+      ? hasOutpostOrderFor(game.fleets, game.playerEmpireId, curSys.id)
+      : false;
 
     return (
       <div className="pointer-events-auto fixed bottom-4 left-16 z-20 w-88 hud-panel rounded-lg overflow-hidden">
@@ -138,7 +142,7 @@ export const SelectionPanel: React.FC = () => {
           <div>
             <div className="flex justify-between text-[11px] text-slate-300 mb-1">
               <span>执行状态</span>
-              <span className="text-sky-200">{fleet.statusText}</span>
+              <span className="text-sky-200">{fleetStatusLabel(fleet, game.systems)}</span>
             </div>
             {progress !== null && (
               <div className="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
@@ -290,10 +294,18 @@ export const SelectionPanel: React.FC = () => {
                 {curSys.ownerId === null && curSys.surveyedByPlayer && outpostCost && (
                   <button
                     onClick={() => commandBuildOutpost(fleet.id, curSys.id)}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium bg-amber-900/60 hover:bg-amber-800/70 border border-amber-400/50 text-amber-100 cursor-pointer"
+                    disabled={outpostQueued}
+                    title={outpostQueued ? '已有工程船在前往/建造该星系的前哨站' : undefined}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium border ${
+                      outpostQueued
+                        ? 'bg-slate-800/60 border-slate-600/50 text-slate-400 cursor-not-allowed'
+                        : 'bg-amber-900/60 hover:bg-amber-800/70 border-amber-400/50 text-amber-100 cursor-pointer'
+                    }`}
                   >
                     <Flag className="w-3.5 h-3.5" />
-                    建造前哨站 ({outpostCost.alloys}合金 / {outpostCost.influence}影响)
+                    {outpostQueued
+                      ? '前哨站建造中…'
+                      : `建造前哨站 (${outpostCost.alloys}合金 / ${outpostCost.influence}影响)`}
                   </button>
                 )}
                 {curSys.ownerId === game.playerEmpireId && unbuiltMining > 0 && (
@@ -354,6 +366,7 @@ export const SelectionPanel: React.FC = () => {
   const unbuiltResearch = sys.planets.filter(
     (p) => p.deposit && p.deposit.type === 'research' && p.stationType === 'none'
   ).length;
+  const outpostQueued = hasOutpostOrderFor(game.fleets, game.playerEmpireId, sys.id);
 
   return (
     <div className="pointer-events-auto fixed bottom-4 left-16 z-20 w-96 hud-panel rounded-lg overflow-hidden">
@@ -425,10 +438,18 @@ export const SelectionPanel: React.FC = () => {
           {sys.surveyedByPlayer && sys.ownerId === null && constructorShip && (
             <button
               onClick={() => commandBuildOutpost(constructorShip.id, sys.id)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-amber-900/65 hover:bg-amber-800/75 border border-amber-400/55 text-amber-100 cursor-pointer"
+              disabled={outpostQueued}
+              title={outpostQueued ? '已有工程船在前往/建造该星系的前哨站' : undefined}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded border ${
+                outpostQueued
+                  ? 'bg-slate-800/60 border-slate-600/50 text-slate-400 cursor-not-allowed'
+                  : 'bg-amber-900/65 hover:bg-amber-800/75 border-amber-400/55 text-amber-100 cursor-pointer'
+              }`}
             >
               <Flag className="w-3.5 h-3.5" />
-              建造前哨站 ({outpostCost.alloys}合金 · {outpostCost.influence}影响)
+              {outpostQueued
+                ? '前哨站建造中…'
+                : `建造前哨站 (${outpostCost.alloys}合金 · ${outpostCost.influence}影响)`}
             </button>
           )}
           {sys.ownerId === game.playerEmpireId && constructorShip && unbuiltMining > 0 && (
