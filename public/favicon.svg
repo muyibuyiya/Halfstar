@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="bg" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#132043" />
+      <stop offset="55%" stop-color="#070c1d" />
+      <stop offset="100%" stop-color="#040712" />
+    </radialGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.85" />
+      <stop offset="50%" stop-color="#818cf8" stop-opacity="0.55" />
+      <stop offset="100%" stop-color="#a855f7" stop-opacity="0.85" />
+    </linearGradient>
+    <linearGradient id="starGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fffbeb" />
+      <stop offset="45%" stop-color="#fde047" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="60%" stop-color="#60a5fa" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Deep-space rounded square backdrop -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#bg)" stroke="url(#borderGrad)" stroke-width="2.2" />
+
+  <!-- Subtle nebula core glow -->
+  <circle cx="32" cy="32" r="22" fill="url(#coreGlow)" />
+
+  <!-- Back half of tilted orbital / stargate ring -->
+  <ellipse cx="32" cy="32" rx="23" ry="9.5" transform="rotate(-24 32 32)" fill="none" stroke="url(#ringGrad)" stroke-width="2.4" stroke-opacity="0.4" />
+
+  <!-- Right half of the 4-point star (dark eclipsed cyan wireframe half) -->
+  <path d="M32 9 L37.5 26.5 L55 32 L37.5 37.5 L32 55 Z" fill="#0b1530" fill-opacity="0.85" stroke="#38bdf8" stroke-width="2" stroke-linejoin="round" />
+
+  <!-- Left half of the 4-point star (radiant lit golden half-star) -->
+  <path d="M32 9 L26.5 26.5 L9 32 L26.5 37.5 L32 55 Z" fill="url(#starGold)" />
+
+  <!-- Vertical split highlight line -->
+  <line x1="32" y1="10" x2="32" y2="54" stroke="#e0f2fe" stroke-width="1.2" stroke-opacity="0.7" />
+
+  <!-- Front arc of tilted orbital ring -->
+  <path d="M11.8 41.2 A23 9.5 -24 0 0 52.2 22.8" fill="none" stroke="url(#ringGrad)" stroke-width="2.6" stroke-linecap="round" />
+
+  <!-- Orbiting star/planet glint -->
+  <circle cx="48.5" cy="24.2" r="2.7" fill="#e0f2fe" />
+  <circle cx="16" cy="17" r="1.4" fill="#fde68a" opacity="0.85" />
+  <circle cx="49" cy="48" r="1.3" fill="#c084fc" opacity="0.85" />
+</svg>
