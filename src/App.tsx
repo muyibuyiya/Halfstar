@@ -28,6 +28,7 @@ import { AchievementsModal } from './ui/AchievementsModal';
 import { GalaxySearchModal } from './ui/GalaxySearchModal';
 import { useGameStore } from './store/useGameStore';
 import { bgm } from './engine/bgm';
+import { saveAutoSave, saveSession } from './engine/saveSystem';
 import { formatKeyCode } from './data/keybindings';
 
 const SPEED_MS: Record<1 | 2 | 3 | 4, number> = {
@@ -77,6 +78,33 @@ export const App: React.FC = () => {
       bgm.playMood(ownedSystems >= 8 ? 'empire' : 'explore');
     }
   }, [screen, useGameStore.getState().tickVersion]);
+
+  // Flush the session on reload / tab close. Without this, a refresh would fall
+  // back to the yearly autosave and silently drop everything played since then.
+  useEffect(() => {
+    const flush = () => {
+      const s = useGameStore.getState();
+      if (s.screen !== 'playing') return;
+      if (s.settings.autoSaveYearly) saveAutoSave(s.game);
+      saveSession({
+        screen: 'playing',
+        systemId: s.activeSystemId,
+        viewMode: s.viewMode,
+        mapMode: s.mapMode,
+      });
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+    window.addEventListener('pagehide', flush);
+    window.addEventListener('beforeunload', flush);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      window.removeEventListener('beforeunload', flush);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
 
   // Main simulation heartbeat (only ticks when actively playing!)
   useEffect(() => {

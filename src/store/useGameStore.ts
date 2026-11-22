@@ -85,10 +85,12 @@ import {
   GameSettings,
   listManualSaves,
   loadAutoSave,
+  loadSession,
   loadSettings,
   persistSettings,
   saveAutoSave,
   saveManualSlot,
+  saveSession,
   SaveSlotRecord,
 } from '../engine/saveSystem';
 import { setSfxConfig, sfx } from '../engine/sfx';
@@ -321,16 +323,36 @@ const DEFAULT_CONFIG: GalaxyConfig = {
   leaderId: 'une_linlan',
 };
 
-const initialGame = generateGalaxy(DEFAULT_CONFIG);
-const initialHomeId = initialGame.empires[initialGame.playerEmpireId].homeSystemId;
 const initialSettings = loadSettings();
 setSfxConfig(initialSettings.sfxEnabled, initialSettings.sfxVolume);
 bgm.setConfig(initialSettings.bgmEnabled, initialSettings.bgmVolume);
 
+// Resume the previous session after a refresh. The autosave holds the full game
+// state; the session record only answers "was the player mid-game?" so that an
+// explicit return-to-title is not undone by hitting F5.
+const bootSession = loadSession();
+const bootSave = bootSession?.screen === 'playing' ? loadAutoSave() : null;
+
+const initialGame = bootSave ? bootSave.data : generateGalaxy(DEFAULT_CONFIG);
+if (bootSave) initialGame.paused = true;
+
+const initialHomeId =
+  initialGame.empires[initialGame.playerEmpireId]?.homeSystemId ?? initialGame.systemOrder[0];
+
+const bootSystemId =
+  bootSave && bootSession?.systemId && initialGame.systems[bootSession.systemId]
+    ? bootSession.systemId
+    : initialHomeId;
+const bootViewMode: ViewMode = bootSave && bootSession?.viewMode === 'system' ? 'system' : 'galaxy';
+const bootMapMode: MapMode =
+  bootSave && bootSession?.mapMode ? bootSession.mapMode : 'empire';
+
+let lastAutoSaveMs = 0;
+
 let toastSeq = 1;
 
 export const useGameStore = create<GameStore>((set, get) => ({
-  screen: 'title',
+  screen: bootSave ? 'playing' : 'title',
   setupPresetId: 'une',
   game: initialGame,
   tickVersion: 0,
@@ -344,13 +366,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   showAchievementsModal: 'none',
   saveListVersion: 0,
 
-  viewMode: 'galaxy',
-  mapMode: 'empire',
-  activeSystemId: initialHomeId,
-  selection: { type: 'fleet', id: 'flt_science_1' },
+  viewMode: bootViewMode,
+  mapMode: bootMapMode,
+  activeSystemId: bootSystemId,
+  selection: bootSave ? null : { type: 'fleet', id: 'flt_science_1' },
   hoveredSystemId: null,
   contextMenu: null,
-  cameraFocus: { systemId: initialHomeId, nonce: 1 },
+  cameraFocus: { systemId: bootSystemId, nonce: 1 },
   toast: null,
   showNewGalaxyModal: false,
   showHyperlanes: true,
@@ -359,6 +381,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   setScreen: (screen) => {
     sfx.click();
+    saveSession({ screen: screen === 'playing' ? 'playing' : 'title' });
     set({ screen, showPauseMenu: false, showSaveModal: 'none' });
   },
 
@@ -371,6 +394,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { game } = get();
     game.paused = true;
     saveAutoSave(game);
+    // An explicit trip to the menu must survive a refresh, so mark the session
+    // as "not playing" — otherwise F5 would drop the player back into the game.
+    saveSession({ screen: 'title' });
     sfx.click();
     set((s) => ({
       screen: 'title',
@@ -451,6 +477,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const fresh = generateGalaxy(config);
     const homeId = fresh.empires[fresh.playerEmpireId].homeSystemId;
     saveAutoSave(fresh);
+    lastAutoSaveMs = Date.now();
+    saveSession({ screen: 'playing', systemId: homeId, viewMode: 'galaxy', mapMode: 'empire' });
     sfx.confirm();
     set((s) => ({
       screen: 'playing',
@@ -492,6 +520,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     if (settings.autoSaveYearly && game.date.year > prevYear) {
       saveAutoSave(game);
+      lastAutoSaveMs = Date.now();
+    } else if (settings.autoSaveYearly && Date.now() - lastAutoSaveMs > 60000) {
+      // Time-throttled autosave: bounds the loss on a crash or a hard refresh to
+      // roughly a minute of play, without serialising the galaxy every tick.
+      saveAutoSave(game);
+      lastAutoSaveMs = Date.now();
     }
     if (game.date.day === 1) {
       const newly = checkAndUnlockAchievements(game);
@@ -838,6 +872,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   loadSaveRecord: (record) => {
     const parsed = JSON.parse(JSON.stringify(record.data)) as GameStateData;
     const homeId = parsed.empires[parsed.playerEmpireId]?.homeSystemId ?? parsed.systemOrder[0];
+    saveSession({ screen: 'playing', systemId: homeId, viewMode: 'galaxy' });
     sfx.confirm();
     set((s) => ({
       screen: 'playing',
@@ -866,6 +901,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const parsed = JSON.parse(raw) as GameStateData;
       if (!parsed.systems || !parsed.empires) throw new Error('invalid');
       const homeId = parsed.empires[parsed.playerEmpireId]?.homeSystemId ?? parsed.systemOrder[0];
+      saveSession({ screen: 'playing', systemId: homeId, viewMode: 'galaxy' });
       sfx.confirm();
       set((s) => ({
         screen: 'playing',

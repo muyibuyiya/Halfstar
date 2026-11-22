@@ -1,9 +1,50 @@
-import { DifficultyId, GameStateData } from '../types/game';
+import { DifficultyId, GameStateData, MapMode, ViewMode } from '../types/game';
 import { DEFAULT_KEYBINDINGS, KeyActionId } from '../data/keybindings';
 
 const AUTOSAVE_KEY = 'halfstar_autosave_v1';
 const MANUAL_SAVES_KEY = 'halfstar_manual_saves_v1';
 const SETTINGS_KEY = 'halfstar_settings_v1';
+const SESSION_KEY = 'halfstar_session_v1';
+
+/**
+ * Where the player was when the tab closed. Kept separate from the save data so
+ * a refresh can resume mid-game, while an explicit "return to title" stays put.
+ */
+export interface SessionRecord {
+  screen: 'title' | 'playing';
+  systemId?: string | null;
+  viewMode?: ViewMode;
+  mapMode?: MapMode;
+  at?: number;
+}
+
+export function saveSession(rec: SessionRecord): void {
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ ...rec, at: Date.now() }));
+  } catch {
+    // ignore quota errors — resuming is a convenience, never a hard failure
+  }
+}
+
+export function loadSession(): SessionRecord | null {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SessionRecord;
+    if (parsed?.screen !== 'playing' && parsed?.screen !== 'title') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function clearSession(): void {
+  try {
+    localStorage.removeItem(SESSION_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 export interface SaveSlotMeta {
   id: string;
