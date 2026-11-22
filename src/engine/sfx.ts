@@ -1,8 +1,5 @@
-// Hybrid SFX Engine: automatically loads external MP3s from public/audio/sfx/ (per AUDIO_SPEC.md)
-// and falls back seamlessly to lightweight zero-dependency Web Audio synth when files are not yet present.
-
-// Toggle external MP3 loading; set false to use the built-in Web Audio procedural synth.
-const USE_EXTERNAL_SFX = false;
+// Procedural SFX Engine: every cue is synthesised at runtime with the Web Audio
+// API — zero audio files, zero network requests, zero loading hitches.
 
 let audioCtx: AudioContext | null = null;
 let sfxEnabled = true;
@@ -23,8 +20,6 @@ type SfxCueId =
   | 'war_declared'
   | 'alert_warning'
   | 'achievement';
-
-const externalStatus: Partial<Record<SfxCueId, 'ok' | 'missing' | 'checking'>> = {};
 
 // Combat cues can fire dozens of times in a single game tick. Without a
 // cooldown the result is a machine gun; these limits keep them readable.
@@ -87,7 +82,7 @@ function playTone(
   }
 }
 
-function playCue(cue: SfxCueId, synthFallback: () => void) {
+function playCue(cue: SfxCueId, synth: () => void) {
   if (!sfxEnabled) return;
 
   const cd = COOLDOWN_MS[cue];
@@ -98,28 +93,7 @@ function playCue(cue: SfxCueId, synthFallback: () => void) {
     lastPlayedAt.set(cue, now);
   }
 
-  if (!USE_EXTERNAL_SFX) {
-    synthFallback();
-    return;
-  }
-
-  const status = externalStatus[cue];
-  if (status === 'missing') {
-    synthFallback();
-    return;
-  }
-
-  const audio = new Audio(`./audio/sfx/sfx_${cue}.mp3`);
-  audio.volume = sfxVolume;
-  audio
-    .play()
-    .then(() => {
-      externalStatus[cue] = 'ok';
-    })
-    .catch(() => {
-      externalStatus[cue] = 'missing';
-      synthFallback();
-    });
+  synth();
 }
 
 export const sfx = {

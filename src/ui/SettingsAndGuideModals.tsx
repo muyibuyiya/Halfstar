@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useGameStore } from '../store/useGameStore';
 import { sfx } from '../engine/sfx';
-import { bgm, BgmMood, USE_EXTERNAL_BGM } from '../engine/bgm';
+import { bgm, BgmMood, BGM_MOODS } from '../engine/bgm';
 import {
   KEY_ACTIONS,
   KEY_CATEGORIES,
@@ -27,15 +27,6 @@ import {
 } from '../data/keybindings';
 
 type SettingsTab = 'controls' | 'audio' | 'display' | 'about';
-
-const BGM_AUDIT_LIST: Array<{ mood: BgmMood; label: string; file: string }> = [
-  { mood: 'title', label: '主界面', file: './audio/bgm/bgm_title.mp3' },
-  { mood: 'explore', label: '深空探索', file: './audio/bgm/bgm_explore_1.mp3' },
-  { mood: 'empire', label: '帝国繁荣', file: './audio/bgm/bgm_empire_mid.mp3' },
-  { mood: 'combat', label: '舰队交战', file: './audio/bgm/bgm_combat.mp3' },
-  { mood: 'crisis', label: '银河天灾', file: './audio/bgm/bgm_crisis.mp3' },
-  { mood: 'victory', label: '凯旋终章', file: './audio/bgm/bgm_victory.mp3' },
-];
 
 export const SettingsModal: React.FC = () => {
   const show = useGameStore((s) => s.showSettingsModal);
@@ -48,9 +39,7 @@ export const SettingsModal: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('controls');
   const [recordingId, setRecordingId] = useState<KeyActionId | null>(null);
   const [conflictNotice, setConflictNotice] = useState<string | null>(null);
-
-  const [auditStatus, setAuditStatus] = useState<Record<string, 'mp3' | 'synth'>>({});
-  const [auditing, setAuditing] = useState(false);
+  const [playingMood, setPlayingMood] = useState<BgmMood | null>(null);
 
   // Key recording listener
   useEffect(() => {
@@ -108,24 +97,10 @@ export const SettingsModal: React.FC = () => {
     };
   }, [recordingId, updateKeybinding]);
 
-  const runAudioAudit = async () => {
-    setAuditing(true);
-    const next: Record<string, 'mp3' | 'synth'> = {};
-    for (const item of BGM_AUDIT_LIST) {
-      if (!USE_EXTERNAL_BGM) {
-        next[item.mood] = 'synth';
-        continue;
-      }
-      try {
-        const res = await fetch(item.file, { method: 'HEAD' });
-        const ct = res.headers.get('content-type') ?? '';
-        next[item.mood] = res.ok && !ct.includes('text/html') ? 'mp3' : 'synth';
-      } catch {
-        next[item.mood] = 'synth';
-      }
-    }
-    setAuditStatus(next);
-    setAuditing(false);
+  const auditionMood = (mood: BgmMood) => {
+    bgm.ensureStarted();
+    bgm.playMood(mood);
+    setPlayingMood(mood);
   };
 
   if (!show) return null;
@@ -479,38 +454,31 @@ export const SettingsModal: React.FC = () => {
                     <span className="text-[11px] font-semibold text-slate-300">
                       深空多情绪氛围试听台（随局势无缝动态流转）
                     </span>
-                    <button
-                      onClick={runAudioAudit}
-                      disabled={auditing}
-                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 text-[10px] text-sky-300 cursor-pointer"
-                    >
-                      {auditing ? '检测中...' : '检测音频管线'}
-                    </button>
+                    <span className="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/70 text-[10px] font-mono text-emerald-300">
+                      实时合成 · 零音频文件
+                    </span>
                   </div>
                   <div className="grid grid-cols-3 gap-1.5">
-                    {BGM_AUDIT_LIST.map((item) => {
-                      const st = auditStatus[item.mood];
+                    {BGM_MOODS.map((item) => {
+                      const active = playingMood === item.mood;
                       return (
                         <button
                           key={item.mood}
-                          onClick={() => {
-                            bgm.ensureStarted();
-                            bgm.playMood(item.mood);
-                          }}
+                          onClick={() => auditionMood(item.mood)}
                           title={`点击试听「${item.label}」和弦层`}
-                          className="p-2 rounded bg-slate-950/80 hover:bg-purple-950/60 border border-slate-700/80 text-center cursor-pointer transition-colors"
+                          className={`p-2 rounded border text-center cursor-pointer transition-colors ${
+                            active
+                              ? 'bg-purple-950/70 border-purple-500/70'
+                              : 'bg-slate-950/80 hover:bg-purple-950/60 border-slate-700/80'
+                          }`}
                         >
                           <div className="text-[11px] text-slate-200 truncate">{item.label}</div>
                           <div
                             className={`text-[9px] font-mono mt-0.5 ${
-                              st === 'mp3'
-                                ? 'text-emerald-400'
-                                : st === 'synth'
-                                ? 'text-amber-300'
-                                : 'text-slate-400'
+                              active ? 'text-purple-300' : 'text-emerald-400/80'
                             }`}
                           >
-                            {st === 'mp3' ? '✓ MP3' : st === 'synth' ? '合成器' : '点击试听'}
+                            {active ? '▶ 播放中' : '程序化合成'}
                           </div>
                         </button>
                       );
