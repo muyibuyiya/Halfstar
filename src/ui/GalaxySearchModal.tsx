@@ -28,6 +28,7 @@ export const GalaxySearchModal: React.FC = () => {
       setOpen((prev) => !prev);
     };
     const onKeyDown = (e: KeyboardEvent) => {
+      if (document.body.getAttribute('data-recording-key') === 'true') return;
       if (e.code === 'Escape' && open) {
         setOpen(false);
         return;
@@ -38,7 +39,9 @@ export const GalaxySearchModal: React.FC = () => {
       ) {
         return;
       }
-      if (e.code === 'KeyF' && useGameStore.getState().screen === 'playing') {
+      const kb = useGameStore.getState().settings.keybindings;
+      const searchKey = kb?.searchGalaxy || 'KeyF';
+      if (e.code === searchKey && useGameStore.getState().screen === 'playing') {
         e.preventDefault();
         setOpen((prev) => !prev);
       }

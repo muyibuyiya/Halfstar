@@ -1,4 +1,5 @@
 import { DifficultyId, GameStateData } from '../types/game';
+import { DEFAULT_KEYBINDINGS, KeyActionId } from '../data/keybindings';
 
 const AUTOSAVE_KEY = 'halfstar_autosave_v1';
 const MANUAL_SAVES_KEY = 'halfstar_manual_saves_v1';
@@ -28,6 +29,7 @@ export interface GameSettings {
   bgmVolume: number; // 0..1
   autoPauseOnEvent: boolean;
   autoSaveYearly: boolean;
+  keybindings: Record<KeyActionId, string>;
 }
 
 export const DEFAULT_SETTINGS: GameSettings = {
@@ -37,13 +39,22 @@ export const DEFAULT_SETTINGS: GameSettings = {
   bgmVolume: 0.28,
   autoPauseOnEvent: true,
   autoSaveYearly: true,
+  keybindings: { ...DEFAULT_KEYBINDINGS },
 };
 
 export function loadSettings(): GameSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return { ...DEFAULT_SETTINGS };
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      keybindings: {
+        ...DEFAULT_KEYBINDINGS,
+        ...(parsed.keybindings || {}),
+      },
+    };
   } catch {
     return { ...DEFAULT_SETTINGS };
   }

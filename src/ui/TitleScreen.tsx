@@ -13,6 +13,7 @@ import {
   ArrowRight,
   Award,
   Trophy,
+  ExternalLink,
 } from 'lucide-react';
 import { useGameStore } from '../store/useGameStore';
 import { PLAYABLE_EMPIRES, DIFFICULTIES } from '../data/playableEmpires';
@@ -186,10 +187,10 @@ export const TitleScreen: React.FC = () => {
           <div className="mb-3">
             <div className="flex items-center gap-3">
               <h1 className="text-4xl font-extrabold tracking-widest text-white drop-shadow-[0_0_20px_rgba(56,189,248,0.35)]">
-                半星纪元
+                半影群星
               </h1>
               <span className="px-2 py-0.5 rounded border border-amber-400/50 bg-amber-500/10 text-amber-300 text-[11px] font-semibold tracking-wider">
-                星海大战略
+                HALFSTAR
               </span>
             </div>
             <div className="text-xs tracking-[0.28em] text-sky-400/90 font-semibold mt-1.5 uppercase">
@@ -326,13 +327,25 @@ export const TitleScreen: React.FC = () => {
           </div>
 
           {/* Footer Auto-save status */}
-          <div className="pt-2 text-[11px] text-slate-500 flex flex-col gap-0.5">
+          <div className="pt-2 text-[11px] text-slate-500 flex flex-col gap-1">
             <div>
               {autoSave
                 ? `自动存档：${autoSave.empireName}（${autoSave.leaderName}）· ${autoSave.year}.${String(autoSave.month).padStart(2, '0')} · ${DIFFICULTIES[autoSave.difficulty]?.name ?? '标准'} · ${formatSavedTime(autoSave.savedAt)}`
                 : '尚未开始星海征程 · 点击「开始新游戏」创建你的星际帝国'}
             </div>
-            <div className="text-slate-600">Half Series · Halfstar v1.7</div>
+            <div className="flex items-center justify-between text-slate-500 pt-0.5">
+              <span>Half Series · 半影群星 Halfstar v1.8</span>
+              <a
+                href="https://space.bilibili.com/351545906?spm_id_from=333.1007.0.0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sky-400/80 hover:text-sky-300 flex items-center gap-1 transition-colors"
+                title="前往 B 站主页支持 Sunset Studio（暮意若慕意）"
+              >
+                <span>Sunset Studio 出品</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
           </div>
         </div>
 

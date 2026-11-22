@@ -28,6 +28,7 @@ import { AchievementsModal } from './ui/AchievementsModal';
 import { GalaxySearchModal } from './ui/GalaxySearchModal';
 import { useGameStore } from './store/useGameStore';
 import { bgm } from './engine/bgm';
+import { formatKeyCode } from './data/keybindings';
 
 const SPEED_MS: Record<1 | 2 | 3 | 4, number> = {
   1: 750,
@@ -44,6 +45,7 @@ export const App: React.FC = () => {
   const toast = useGameStore((s) => s.toast);
   const showAchievementsModal = useGameStore((s) => s.showAchievementsModal);
   const setShowAchievementsModal = useGameStore((s) => s.setShowAchievementsModal);
+  const keybindings = useGameStore((s) => s.settings.keybindings);
   const [showHotkeys, setShowHotkeys] = useState(false);
 
   // Start ambient BGM on first user pointer interaction + sync mood
@@ -86,9 +88,10 @@ export const App: React.FC = () => {
     return () => window.clearInterval(timer);
   }, [screen, paused, speed]);
 
-  // Global Stellaris-like hotkeys
+  // Global Stellaris-like hotkeys (dynamic based on user keybindings)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (document.body.getAttribute('data-recording-key') === 'true') return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       const store = useGameStore.getState();
 
@@ -109,46 +112,47 @@ export const App: React.FC = () => {
       }
 
       if (store.screen !== 'playing') return;
+      const kb = store.settings.keybindings;
 
-      if (e.code === 'Space') {
+      if (e.code === kb.togglePause) {
         e.preventDefault();
         store.togglePause();
-      } else if (e.code === 'Home') {
+      } else if (e.code === kb.focusHome) {
         e.preventDefault();
         const homeId = store.game.empires[store.game.playerEmpireId]?.homeSystemId;
         if (homeId) {
           store.enterGalaxyView();
           store.focusCameraOnSystem(homeId);
         }
-      } else if (e.key === '?' || (e.shiftKey && e.code === 'Slash')) {
+      } else if (e.code === kb.quickHelp || e.key === '?' || (e.shiftKey && e.code === 'Slash')) {
         e.preventDefault();
         setShowHotkeys((v) => !v);
-      } else if (e.code === 'Digit1') {
+      } else if (e.code === kb.speed1) {
         store.setSpeed(1);
-      } else if (e.code === 'Digit2') {
+      } else if (e.code === kb.speed2) {
         store.setSpeed(2);
-      } else if (e.code === 'Digit3') {
+      } else if (e.code === kb.speed3) {
         store.setSpeed(3);
-      } else if (e.code === 'Digit4') {
+      } else if (e.code === kb.speed4) {
         store.setSpeed(4);
-      } else if (e.code === 'KeyE') {
+      } else if (e.code === kb.toggleView) {
         store.toggleViewMode();
-      } else if (e.code === 'F1') {
+      } else if (e.code === kb.drawerTech) {
         e.preventDefault();
         store.toggleDrawer('tech');
-      } else if (e.code === 'F2') {
+      } else if (e.code === kb.drawerMarket) {
         e.preventDefault();
         store.toggleDrawer('market');
-      } else if (e.code === 'F3') {
+      } else if (e.code === kb.drawerShips) {
         e.preventDefault();
         store.toggleDrawer('ship_designer');
-      } else if (e.code === 'F4') {
+      } else if (e.code === kb.drawerDiplomacy) {
         e.preventDefault();
         store.toggleDrawer('diplomacy');
-      } else if (e.code === 'F5') {
+      } else if (e.code === kb.drawerTraditions) {
         e.preventDefault();
         store.toggleDrawer('traditions');
-      } else if (e.code === 'F6') {
+      } else if (e.code === kb.drawerSituation) {
         e.preventDefault();
         store.toggleDrawer('situation');
       }
@@ -191,14 +195,14 @@ export const App: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[11px]">
                   {[
-                    ['Space', '暂停 / 继续时间'],
-                    ['1 / 2 / 3 / 4', '切换 1x ~ 4x 流速'],
-                    ['E', '切换 银河 / 3D星系视图'],
-                    ['F', '星图全局搜索与筛选'],
-                    ['Home', '镜头秒回帝国母星系'],
-                    ['WASD / 方向键', '平移星图镜头'],
-                    ['F1 ~ F6', '科研 / 市场 / 舰船 / 外交 / 传统 / 局势'],
-                    ['? / Esc', '速查表 / 关闭当前窗口'],
+                    [formatKeyCode(keybindings?.togglePause || 'Space'), '暂停 / 继续时间'],
+                    [`${formatKeyCode(keybindings?.speed1 || 'Digit1')} ~ ${formatKeyCode(keybindings?.speed4 || 'Digit4')}`, '切换 1x ~ 4x 流速'],
+                    [formatKeyCode(keybindings?.toggleView || 'KeyE'), '切换 银河 / 3D星系视图'],
+                    [formatKeyCode(keybindings?.searchGalaxy || 'KeyF'), '星图全局搜索与筛选'],
+                    [formatKeyCode(keybindings?.focusHome || 'Home'), '镜头秒回帝国母星系'],
+                    [`${formatKeyCode(keybindings?.camForward || 'KeyW')}${formatKeyCode(keybindings?.camLeft || 'KeyA')}${formatKeyCode(keybindings?.camBackward || 'KeyS')}${formatKeyCode(keybindings?.camRight || 'KeyD')} / 方向键`, '平移星图镜头'],
+                    [`${formatKeyCode(keybindings?.drawerTech || 'F1')} ~ ${formatKeyCode(keybindings?.drawerSituation || 'F6')}`, '科研 / 市场 / 舰船 / 外交 / 传统 / 局势'],
+                    [`${formatKeyCode(keybindings?.quickHelp || 'Slash')} / Esc`, '速查表 / 关闭当前窗口'],
                   ].map(([k, desc]) => (
                     <div
                       key={k}

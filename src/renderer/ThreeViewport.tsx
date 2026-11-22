@@ -278,6 +278,7 @@ export const ThreeViewport: React.FC = () => {
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (document.body.getAttribute('data-recording-key') === 'true') return;
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       keysDown.add(e.code);
     };
@@ -314,20 +315,21 @@ export const ThreeViewport: React.FC = () => {
       const cam = cameraStateRef.current;
       const store = useGameStore.getState();
 
-      // Keyboard WASD camera pan
+      // Keyboard camera pan (configurable via keybindings)
       const panSpeed = cam.distance * 0.9 * dt;
       const forward = new THREE.Vector3(-Math.sin(cam.yaw), 0, -Math.cos(cam.yaw));
       const right = new THREE.Vector3(Math.cos(cam.yaw), 0, -Math.sin(cam.yaw));
-      if (keysDown.has('KeyW') || keysDown.has('ArrowUp')) {
+      const kb = store.settings.keybindings;
+      if (keysDown.has(kb?.camForward || 'KeyW') || keysDown.has('ArrowUp')) {
         cam.desiredTarget.addScaledVector(forward, panSpeed);
       }
-      if (keysDown.has('KeyS') || keysDown.has('ArrowDown')) {
+      if (keysDown.has(kb?.camBackward || 'KeyS') || keysDown.has('ArrowDown')) {
         cam.desiredTarget.addScaledVector(forward, -panSpeed);
       }
-      if (keysDown.has('KeyA') || keysDown.has('ArrowLeft')) {
+      if (keysDown.has(kb?.camLeft || 'KeyA') || keysDown.has('ArrowLeft')) {
         cam.desiredTarget.addScaledVector(right, -panSpeed);
       }
-      if (keysDown.has('KeyD') || keysDown.has('ArrowRight')) {
+      if (keysDown.has(kb?.camRight || 'KeyD') || keysDown.has('ArrowRight')) {
         cam.desiredTarget.addScaledVector(right, panSpeed);
       }
 

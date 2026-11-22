@@ -78,6 +78,7 @@ import {
   upgradeToStarport,
 } from '../engine/commands';
 import { checkAndUnlockAchievements } from '../data/achievements';
+import { DEFAULT_KEYBINDINGS, KeyActionId } from '../data/keybindings';
 import { bgm } from '../engine/bgm';
 import {
   deleteManualSlot,
@@ -151,6 +152,8 @@ interface GameStore {
   setShowAchievementsModal: (tab: 'none' | 'achievements' | 'history') => void;
   setMapMode: (mode: MapMode) => void;
   updateSettings: (patch: Partial<GameSettings>) => void;
+  updateKeybinding: (actionId: KeyActionId, code: string) => { swappedWith?: KeyActionId };
+  resetKeybindings: () => void;
 
   // Actions
   newGalaxy: (config: GalaxyConfig) => void;
@@ -421,6 +424,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
     setSfxConfig(next.sfxEnabled, next.sfxVolume);
     bgm.setConfig(next.bgmEnabled, next.bgmVolume);
     set({ settings: next });
+  },
+
+  updateKeybinding: (actionId: KeyActionId, code: string) => {
+    const curBindings = { ...get().settings.keybindings };
+    let swappedWith: KeyActionId | undefined;
+    for (const [otherId, otherCode] of Object.entries(curBindings)) {
+      if (otherId !== actionId && otherCode === code) {
+        swappedWith = otherId as KeyActionId;
+        break;
+      }
+    }
+    if (swappedWith) {
+      curBindings[swappedWith] = curBindings[actionId];
+    }
+    curBindings[actionId] = code;
+    get().updateSettings({ keybindings: curBindings });
+    return { swappedWith };
+  },
+
+  resetKeybindings: () => {
+    get().updateSettings({ keybindings: { ...DEFAULT_KEYBINDINGS } });
   },
 
   newGalaxy: (config) => {
