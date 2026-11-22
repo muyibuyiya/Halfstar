@@ -109,7 +109,7 @@ export const SettingsModal: React.FC = () => {
 
   return (
     <div className="pointer-events-auto fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl hud-panel rounded-xl overflow-hidden shadow-2xl border border-sky-400/40 flex flex-col max-h-[88vh]">
+      <div className="w-full max-w-2xl hud-panel rounded-xl overflow-hidden shadow-2xl border border-sky-400/40 flex flex-col h-[86vh] max-h-[700px] min-h-[440px]">
         {/* Top Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-sky-500/25 bg-sky-950/40 shrink-0">
           <div className="flex items-center gap-2">
@@ -160,8 +160,8 @@ export const SettingsModal: React.FC = () => {
           })}
         </div>
 
-        {/* Tab Body */}
-        <div className="p-5 overflow-y-auto space-y-4 text-xs flex-1">
+        {/* Tab Body — fixed-height modal, so each tab scrolls independently */}
+        <div className="p-5 overflow-y-auto overscroll-contain space-y-4 text-xs flex-1 min-h-0">
           {/* TAB 1: CONTROLS & KEYBINDINGS */}
           {activeTab === 'controls' && (
             <div className="space-y-4">
@@ -532,34 +532,28 @@ export const SettingsModal: React.FC = () => {
 
           {/* TAB 4: ABOUT & SUNSET STUDIO BRANDING */}
           {activeTab === 'about' && (
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4 h-full min-h-0">
               {/* Sunset Studio Feature Card */}
-              <div className="p-5 rounded-xl bg-gradient-to-br from-slate-900 via-sky-950/40 to-slate-950 border border-sky-400/40 shadow-xl space-y-3.5">
+              <div className="shrink-0 p-5 rounded-xl bg-gradient-to-br from-slate-900 via-sky-950/25 to-slate-950 border border-sky-400/30 flex flex-col gap-4">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-lg font-black text-white tracking-widest">
+                      <span className="text-xl font-black text-white tracking-widest">
                         Sunset Studio
                       </span>
                       <span className="px-2 py-0.5 rounded bg-sky-500/20 border border-sky-400/50 text-sky-300 text-[10px] font-semibold">
                         出品
                       </span>
                     </div>
-                    <div className="text-xs text-sky-200/80 mt-1">
+                    <div className="text-xs text-sky-200/80 mt-1.5">
                       专注硬核大战略与文明演化的独立游戏研发团队
                     </div>
                   </div>
                   <Sparkles className="w-5 h-5 text-sky-400 shrink-0" />
                 </div>
 
-                <p className="text-[11px] text-slate-300 leading-relaxed border-t border-slate-800/80 pt-3">
-                  《半影群星 Halfstar》是 Sunset Studio 继历史 4X 大战略作品《半壁江山 Halfciv》之后的
-                  Half 系列太空题材力作。深度对标《群星 Stellaris》的浩瀚星海与《三体》的硬科幻哲学，致力于在纯
-                  Web 端呈现即开即玩、零门槛加载、兼备宏大叙事与微操维度的 3D 实时可暂停星际大战略。
-                </p>
-
                 {/* Direct Bilibili Jump Button */}
-                <div className="pt-2">
+                <div>
                   <a
                     href="https://space.bilibili.com/351545906?spm_id_from=333.1007.0.0"
                     target="_blank"
@@ -572,25 +566,43 @@ export const SettingsModal: React.FC = () => {
                 </div>
               </div>
 
-              {/* Version & Specs */}
-              <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800 space-y-1.5 text-[11px] text-slate-400">
-                <div className="flex justify-between">
-                  <span>当前版本</span>
-                  <span className="font-mono text-slate-200 font-semibold">
-                    半影群星 Halfstar v1.8
-                  </span>
+              {/* Version */}
+              <div className="shrink-0 flex items-center justify-between px-4 py-3 rounded-lg bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400">
+                <span>当前版本</span>
+                <span className="font-mono text-slate-200 font-semibold">
+                  半影群星 Halfstar v1.9.1
+                </span>
+              </div>
+
+              {/* Game introduction */}
+              <div className="flex-1 min-h-0 overflow-y-auto rounded-lg bg-slate-900/50 border border-slate-800/80 p-4 space-y-3">
+                <div className="text-[11px] font-semibold text-slate-300">
+                  关于《半影群星 Halfstar》
                 </div>
-                <div className="flex justify-between">
-                  <span>系列定位</span>
-                  <span className="text-slate-300">Half Series · 姊妹篇《半壁江山 Halfciv》</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>渲染管线</span>
-                  <span className="text-slate-300">Three.js WebGL 3D + Tailwind CSS v4</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>音频引擎</span>
-                  <span className="text-slate-300">Web Audio API 宇宙和弦合成系统</span>
+                <p className="text-[11px] leading-relaxed text-slate-400">
+                  Halfstar 是一款灵感来源于《群星 Stellaris》的 Web
+                  端太空 4X 大战略。无需下载安装，打开浏览器即可从一颗母星起步——探索星海、调查异常、
+                  殖民行星、抽取科技、设计舰船，最终在银河共同体的议会桌上为文明争得一席之地。
+                </p>
+                <p className="text-[11px] leading-relaxed text-slate-400">
+                  深度不做妥协：111 项科技与三线抽卡研发、可暂停的实时银河模拟、四级恒星基地、五大巨型
+                  建筑、四只远古利维坦与四条截然不同的终局路线；再叠加《三体》式的硬科幻气质，让宏大
+                  叙事与微操维度同时成立。
+                </p>
+                <div className="grid grid-cols-2 gap-1.5 pt-1">
+                  {[
+                    '6 大文明 · 三体领袖',
+                    '3D 星海与星系视图',
+                    '程序化音频 · 零音频资产',
+                    '一秒开局 · 约 1.4MB',
+                  ].map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-1 rounded bg-slate-800/60 border border-slate-700/70 text-[10px] text-slate-400 text-center truncate"
+                    >
+                      {tag}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>

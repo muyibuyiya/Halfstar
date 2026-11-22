@@ -334,7 +334,7 @@ export const TitleScreen: React.FC = () => {
                 : '尚未开始星海征程 · 点击「开始新游戏」创建你的星际帝国'}
             </div>
             <div className="flex items-center justify-between text-slate-500 pt-0.5">
-              <span>Half Series · 半影群星 Halfstar v1.8</span>
+              <span>Half Series · 半影群星 Halfstar v1.9.1</span>
               <a
                 href="https://space.bilibili.com/351545906?spm_id_from=333.1007.0.0"
                 target="_blank"
